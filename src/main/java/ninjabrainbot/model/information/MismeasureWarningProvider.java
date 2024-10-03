@@ -44,7 +44,12 @@ public class MismeasureWarningProvider extends InformationMessageProvider {
 			expectedLikelihood *= 1.0 / Math.sqrt(2);
 		}
 
-		return (likelihood / expectedLikelihood) < 0.01;
+		if ((likelihood / expectedLikelihood) >= 0.01) {
+			return false;
+		}
+		int x = bestPrediction.chunk.eightEightX() - (int)dataState.playerPosition().get().xInPlayerDimension();
+		int z = bestPrediction.chunk.eightEightZ() - (int)dataState.playerPosition().get().zInPlayerDimension();
+		return (x*x + z*z) < 9000;
 	}
 
 	private InformationMessage warningMessage = null;

@@ -77,7 +77,7 @@ public class MainTextArea extends ResizablePanel {
 	private void onViewTypeChanged() {
 		ICalculatorResult result = dataState.calculatorResult().get();
 		if (preferences.view.get() == MainViewType.BASIC || (result != null && !result.success())) {
-			basicTriangulation.setResult(result);
+			basicTriangulation.setResult(result, dataState);
 			basicTriangulation.updateColors();
 		} else {
 			detailedTriangulation.setResult(result);
@@ -115,7 +115,7 @@ public class MainTextArea extends ResizablePanel {
 
 	private void setResult(ICalculatorResult result) {
 		if (preferences.view.get() == MainViewType.BASIC || (result != null && !result.success())) {
-			basicTriangulation.setResult(result);
+			basicTriangulation.setResult(result, dataState);
 			basicTriangulation.updateColors();
 		} else {
 			detailedTriangulation.setResult(result);

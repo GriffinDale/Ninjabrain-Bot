@@ -15,6 +15,7 @@ import ninjabrainbot.gui.components.panels.ThemedPanel;
 import ninjabrainbot.gui.style.StyleManager;
 import ninjabrainbot.io.preferences.NinjabrainBotPreferences;
 import ninjabrainbot.io.preferences.enums.StrongholdDisplayType;
+import ninjabrainbot.model.datastate.IDataState;
 import ninjabrainbot.model.datastate.calculator.ICalculatorResult;
 import ninjabrainbot.model.datastate.stronghold.Chunk;
 import ninjabrainbot.model.datastate.stronghold.ChunkPrediction;
@@ -33,6 +34,7 @@ public class BasicTriangulationPanel extends ThemedPanel implements IDisposable 
 	public final ColorMapLabel currentAngleLabel;
 
 	private ICalculatorResult currentResult;
+	private IDataState currentDataState;
 
 	DisposeHandler disposeHandler = new DisposeHandler();
 	Subscription chunkPredictionSubscription;
@@ -63,13 +65,14 @@ public class BasicTriangulationPanel extends ThemedPanel implements IDisposable 
 		netherLabel.setForegroundColor(styleManager.currentTheme.TEXT_COLOR_SLIGHTLY_WEAK);
 		certaintyPanel.setForegroundColor(styleManager.currentTheme.TEXT_COLOR_SLIGHTLY_WEAK);
 		currentAngleLabel.setForegroundColor(styleManager.currentTheme.TEXT_COLOR_SLIGHTLY_WEAK);
-		disposeHandler.add(preferences.strongholdDisplayType.whenModified().subscribeEDT(__ -> setResult(currentResult)));
-		disposeHandler.add(preferences.colorCodeNegativeCoords.whenModified().subscribeEDT(__ -> setResult(currentResult)));
+		disposeHandler.add(preferences.strongholdDisplayType.whenModified().subscribeEDT(__ -> setResult(currentResult, currentDataState)));
+		disposeHandler.add(preferences.colorCodeNegativeCoords.whenModified().subscribeEDT(__ -> setResult(currentResult, currentDataState)));
 		disposeHandler.add(preferences.showAngleErrors.whenModified().subscribeEDT(this::setAngleUpdatesEnabled));
 	}
 
-	public void setResult(ICalculatorResult result) {
+	public void setResult(ICalculatorResult result, IDataState dataState) {
 		currentResult = result;
+		currentDataState = dataState;
 		if (result != null) {
 			if (result.success()) {
 				ChunkPrediction prediction = result.getBestPrediction();
@@ -79,7 +82,12 @@ public class BasicTriangulationPanel extends ThemedPanel implements IDisposable 
 				chunkPredictionSubscription = prediction.whenRelativePlayerPositionChanged().subscribeEDT(__ -> setChunkPrediction(prediction));
 			} else {
 				mainTextLabel.setText(I18n.get("could_not_determine"));
-				certaintyPanel.setText(I18n.get("you_probably_misread"));
+				int x = (int)dataState.playerPosition().get().xInPlayerDimension();
+				int z = (int)dataState.playerPosition().get().zInPlayerDimension();
+				if (Math.sqrt(x*x + z*z) <= 30000)
+					certaintyPanel.setText(I18n.get("you_probably_misread"));
+				else
+					certaintyPanel.setText(I18n.get("youre_probably_too_far"));
 				certaintyPanel.setColoredText("", 0);
 				netherLabel.setText("");
 				currentAngleLabel.clear();
